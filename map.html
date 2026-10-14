@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Location</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background-color: #f4f4f9; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .btn-track { background-color: #28a745; color: white; border: none; padding: 15px 30px; font-size: 18px; border-radius: 5px; cursor: pointer; margin: 20px 0; width: 100%; }
+        .btn-weather { background-color: #17a2b8; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>లైవ్ లొకేషన్ ట్రాకర్</h2>
+        <p>మీ లొకేషన్ వివరాలను అడ్మిన్‌కు పంపడానికి క్రింది బటన్‌ను క్లిక్ చేయండి.</p>
+        
+        <button class="btn-track" onclick="sendLocation()">నా లొకేషన్ పంపించు (Send Lat/Lon)</button>
+        <br><br>
+        <a href="weather.html" class="btn-weather">వాతావరణ వివరాలు (Weather)</a>
+    </div>
+
+    <!-- Firebase SDK Links -->
+    <script src="https://gstatic.com"></script>
+    <script src="https://gstatic.com"></script>
+
+    <script>
+        // మీ ఫైర్‌బేస్ కాన్ఫిగరేషన్ (నెక్స్ట్ స్టెప్‌లో మార్చాలి)
+        const firebaseConfig = {
+            databaseURL: "YOUR_FIREBASE_DATABASE_URL"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        function sendLocation() {
+            const username = localStorage.getItem('currentUser') || 'Anonymous';
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+
+                    // డేటాబేస్‌లోకి యూజర్ ఐడి, లాట్, లాన్ వివరాలను పంపే కోడ్
+                    database.ref('locations/' + username).set({
+                        latitude: lat,
+                        longitude: lon,
+                        time: new Date().toLocaleString()
+                    }).then(() => {
+                        alert('మీ లొకేషన్ విజయవంతంగా అడ్మిన్‌కు పంపబడింది!');
+                    });
+
+                }, () => {
+                    alert('లొకేషన్ పర్మిషన్ రిజెక్ట్ చేయబడింది.');
+                });
+            } else {
+                alert('మీ బ్రౌజర్ లొకేషన్‌ను సపోర్ట్ చేయట్లేదు.');
+            }
+        }
+    </script>
+</body>
+</html>
