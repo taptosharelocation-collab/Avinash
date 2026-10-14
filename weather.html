@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Info</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #e0f7fa; text-align: center; padding: 50px; }
+        .weather-card { background: white; padding: 30px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .btn-back { background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; margin-top: 20px; display: inline-block; }
+    </style>
+</head>
+<body>
+    <div class="weather-card">
+        <img src="weather.png" alt="Weather Icon" width="100">
+        <h2>ప్రస్తుత వాతావరణం</h2>
+        <div id="weather-data">వాతావరణ సమాచారాన్ని లోడ్ చేస్తోంది...</div>
+        <br>
+        <a href="map.html" class="btn-back">వెనక్కి వెళ్ళండి</a>
+    </div>
+
+    <script>
+        async function fetchWeather() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    const apiKey = '0709e0cd2fabd73d0408ebce3fe07cc4'; 
+
+                    try {
+                        const res = await fetch(`https://openweathermap.org{lat}&lon=${lon}&units=metric&appid=${apiKey}`);
+                        const data = await res.json();
+                        
+                        document.getElementById('weather-data').innerHTML = `
+                            <h3>నగరం: ${data.name}</h3>
+                            <p>ఉష్ణోగ్రత: ${data.main.temp} °C</p>
+                            <p>వాతావరణం: ${data.weather[0].description}</p>
+                            <p>గాలిలో తేమ: ${data.main.humidity}%</p>
+                        `;
+                    } catch (err) {
+                        document.getElementById('weather-data').innerHTML = "వాతావరణ వివరాలు అందడం లేదు.";
+                    }
+                });
+            }
+        }
+        fetchWeather();
+    </script>
+</body>
+</html>
